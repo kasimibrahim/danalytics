@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>XYZ Dashboard — Ghana Low Private Schools SDG</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#2b3240;--sidebar:#232b38;--panel:#323d4e;--panel2:#3a4454;
+  --border:#4a5568;--accent:#53687e;--accent2:#c2b2b4;--accent3:#8a9bb0;
+  --text:#eef0f4;--muted:#c2b2b4;--soft:#8a9bb0;
+  --green:#91cb3e;--yellow:#eee82c;--amber:#c9a96e;--red:#c27070;
+  --sidebar-w:240px;--radius:12px;
+}
+body{background:var(--bg);color:var(--text);font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:13.5px;line-height:1.55;display:flex;min-height:100vh;overflow-x:hidden}
+#sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:200}
+.sb-logo{padding:26px 20px 20px;border-bottom:1px solid var(--border)}
+.sb-logo .xyz{font-size:22px;font-weight:700;color:var(--text);letter-spacing:1px}
+.sb-logo .xyz span{color:var(--yellow)}
+.sb-logo .sub{font-size:10.5px;color:var(--muted);margin-top:3px;letter-spacing:.4px}
+.sb-nav{padding:16px 10px;flex:1}
+.sb-section{font-size:9.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--soft);padding:10px 12px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:400;transition:background .15s,color .15s;margin-bottom:2px;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--panel2);color:var(--text)}
+.nav-item.active{background:var(--accent);color:#fff;font-weight:700}
+.sb-footer{padding:16px 18px;border-top:1px solid var(--border);font-size:11px;color:var(--soft);line-height:1.7}
+.sb-footer strong{color:var(--text);display:block;font-size:12px}
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+.topbar{background:var(--sidebar);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:15px;font-weight:700;color:var(--text)}
+.topbar-title span{color:var(--yellow)}
+.topbar-badges{display:flex;gap:10px;align-items:center}
+.badge-pill{padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.pill-blue{background:rgba(83,104,126,.25);color:#8fb3d4}
+.pill-yellow{background:rgba(238,232,44,.18);color:#eee82c}
+.pill-green{background:rgba(145,203,62,.18);color:#91cb3e}
+.page{display:none;padding:26px 28px}
+.page.active{display:block}
+.sec-eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--soft);margin-bottom:4px}
+.sec-title{font-size:19px;font-weight:700;margin-bottom:3px}
+.sec-desc{font-size:12.5px;color:var(--muted);margin-bottom:24px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.kpi-card::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:3px}
+.kpi-card.c-green::after{background:var(--green)}
+.kpi-card.c-blue::after{background:var(--accent3)}
+.kpi-card.c-rose::after{background:var(--accent2)}
+.kpi-card.c-amber::after{background:var(--yellow)}
+.kpi-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px}
+.kpi-val{font-size:28px;font-weight:700;line-height:1}
+.kpi-val.c-green{color:var(--green)}
+.kpi-val.c-blue{color:var(--accent3)}
+.kpi-val.c-rose{color:var(--accent2)}
+.kpi-val.c-amber{color:var(--yellow)}
+.kpi-sub{font-size:11px;color:var(--soft);margin-top:6px}
+.charts-grid{display:grid;gap:16px;margin-bottom:18px}
+.c2{grid-template-columns:1fr 1fr}
+.c32{grid-template-columns:1.55fr 1fr}
+.chart-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.chart-head{margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.chart-title{font-size:13.5px;font-weight:700;margin-bottom:2px}
+.chart-sub{font-size:11.5px;color:var(--muted)}
+canvas{max-height:270px}
+canvas.tall{max-height:310px}
+canvas.r{max-height:290px}
+.dd-block{border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-top:12px}
+.dd-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--panel2);border:none;color:var(--text);cursor:pointer;padding:10px 14px;font-size:12.5px;font-weight:700;font-family:inherit;transition:background .15s}
+.dd-toggle:hover{background:#3f4e62}
+.dd-toggle .arrow{transition:transform .3s;font-size:11px;color:var(--soft)}
+.dd-toggle.open .arrow{transform:rotate(180deg)}
+.dd-body{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .25s ease;background:var(--panel)}
+.dd-body.open{max-height:500px;padding:14px 16px}
+.dd-body p{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.65}
+.dd-body ul{padding-left:16px;font-size:12px;color:var(--muted);line-height:1.8}
+.dd-stat-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.dd-stat{background:var(--panel2);border-radius:7px;padding:10px 14px;flex:1;min-width:110px}
+.dd-stat-val{font-size:18px;font-weight:700;color:var(--yellow)}
+.dd-stat-lbl{font-size:10px;color:var(--soft);margin-top:2px;text-transform:uppercase;letter-spacing:.6px}
+.table-wrap{overflow-x:auto;margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:var(--panel2);color:var(--soft);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:9px 13px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:10px 13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.025)}
+.tbadge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:700}
+.tb-g{background:rgba(145,203,62,.15);color:#91cb3e}
+.tb-a{background:rgba(238,232,44,.15);color:#eee82c}
+.tb-r{background:rgba(194,112,112,.15);color:var(--red)}
+.bar-t{background:var(--border);border-radius:99px;height:5px;width:70px;display:inline-block;vertical-align:middle}
+.bar-f{height:100%;border-radius:99px}
+.ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ins-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.ins-card.full{grid-column:1/-1}
+.ins-num{font-size:42px;font-weight:700;line-height:1;margin-bottom:6px}
+.ins-title{font-size:14px;font-weight:700;margin-bottom:8px}
+.ins-body{font-size:12.5px;color:var(--muted);line-height:1.7}
+.ins-eyebrow{font-size:9.5px;letter-spacing:1.8px;text-transform:uppercase;margin-bottom:10px}
+.rec-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:10px}
+.rec-col-title{font-size:12.5px;font-weight:700;margin-bottom:8px}
+.rec-col-body{font-size:12px;color:var(--muted);line-height:1.75}
+.school-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:18px}
+.school-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.school-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.school-card-name{font-size:14px;font-weight:700;color:var(--text)}
+.school-card-region{font-size:11px;color:var(--soft);margin-top:3px}
+.school-metrics-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.school-metric{background:var(--panel2);border-radius:8px;padding:10px 12px;text-align:center}
+.school-metric-val{font-size:17px;font-weight:700}
+.school-metric-lbl{font-size:9.5px;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.school-bars{display:flex;flex-direction:column;gap:7px}
+.school-bar-row{display:flex;align-items:center;gap:10px}
+.school-bar-label{font-size:10.5px;color:var(--soft);min-width:75px}
+.school-bar-track{flex:1;background:var(--border);border-radius:99px;height:6px}
+.school-bar-fill{height:100%;border-radius:99px;transition:width .9s ease}
+.school-bar-val{font-size:10.5px;color:var(--muted);min-width:28px;text-align:right}
+.school-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.school-teachers{font-size:11px;color:var(--muted)}
+.school-fees{font-size:12px;font-weight:700;color:var(--yellow)}
+.ring-wrap{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px}
+.ring-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ring-label{font-size:11px;color:var(--muted);text-align:center;max-width:75px}
+svg.ring circle{transition:stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)}
+.fade-in{opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+.page.active{animation:pageIn .35s ease both}
+@keyframes pageIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+
+<!-- ──────────── SIDEBAR ──────────── -->
+<nav id="sidebar">
+  <div class="sb-logo">
+    <div class="xyz">X<span>Y</span>Z</div>
+    <div class="sub">SDG Education Analytics · Ghana</div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-section">Menu</div>
+    <button class="nav-item active" onclick="showPage('home',this)">Home</button>
+    <button class="nav-item" onclick="showPage('kpis',this)">KPIs</button>
+    <button class="nav-item" onclick="showPage('stakeholders',this)">Stakeholders</button>
+    <button class="nav-item" onclick="showPage('insights',this)">Insights</button>
+    <div class="sb-section" style="margin-top:16px">SDG Focus</div>
+    <div style="padding:6px 14px 0;font-size:11.5px;color:var(--soft);line-height:2">
+      SDG 4 — Quality Education<br>
+      SDG 5 — Gender Equality<br>
+      SDG 1 — No Poverty
+    </div>
+  </div>
+  <div class="sb-footer">
+    <strong>Academic Year 2023/24</strong>
+    10 Schools &middot; 10 Regions<br>
+    Updated: April 2024
+  </div>
+</nav>
+
+<!-- ──────────── MAIN ──────────── -->
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title">Low Private Schools — <span>Ghana SDG Dashboard</span></div>
+    <div class="topbar-badges">
+      <span class="badge-pill pill-blue">Live Data</span>
+      <span class="badge-pill pill-yellow">AY 2023/24</span>
+      <span class="badge-pill pill-green">10 Regions</span>
+    </div>
+  </div>
+
+  <!-- ══════ HOME ══════ -->
+  <div class="page active" id="page-home">
+    <div class="sec-eyebrow">Overview</div>
+    <div class="sec-title">National School Performance</div>
+    <div class="sec-desc">Aggregated analytics from 10 low-cost private schools across Ghana — benchmarked against UN SDG targets.</div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card c-green fade-in">
+        <div class="kpi-label">Total Enrollment</div>
+        <div class="kpi-val c-green" data-count="2306" data-prefix="" data-suffix="">0</div>
+        <div class="kpi-sub">Across 10 schools</div>
+      </div>
+      <div class="kpi-card c-blue fade-in">
+        <div class="kpi-label">Avg. Pass Rate</div>
+        <div class="kpi-val c-blue" data-count="61.5" data-suffix="%">0%</div>
+        <div class="kpi-sub">BECE &amp; internal exams</div>
+      </div>
+      <div class="kpi-card c-rose fade-in">
+        <div class="kpi-label">Girls Enrollment</div>
+        <div class="kpi-val c-rose" data-count="46.6" data-suffix="%">0%</div>
+        <div class="kpi-sub">SDG 5 gender parity</div>
+      </div>
+      <div class="kpi-card c-amber fade-in">
+        <div class="kpi-label">Avg. Infrastructure</div>
+        <div class="kpi-val c-amber" data-count="47.1" data-suffix="/100">0/100</div>
+        <div class="kpi-sub">Facility quality index</div>
+      </div>
+    </div>
+
+    <div class="charts-grid c32">
+      <div class="chart-card fade-in">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-title">Monthly Enrollment Trend</div>
+            <div class="chart-sub">Total students — AY 2023/24</div>
+          </div>
+        </div>
+        <canvas id="lineChart" class="tall"></canvas>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">
+            Trend Analysis &amp; Key Observations <span class="arrow">▼</span>
+          </button>
+          <div class="dd-body">
+            <p>Enrollment peaked in <strong>December</strong> at 2,450 pupils — a 16.7% increase from January. The mid-year dip in July/August aligns with the long vacation period typical in Ghana's academic calendar.</p>
+            <p>The Northern and Upper regions show lower contribution to enrollment growth due to seasonal agricultural demands pulling children out of school during planting and harvest seasons.</p>
+            <div class="dd-stat-row">
+              <div class="dd-stat"><div class="dd-stat-val">+16.7%</div><div class="dd-stat-lbl">Annual Growth</div></div>
+              <div class="dd-stat"><div class="dd-stat-val">Jul</div><div class="dd-stat-lbl">Lowest Month</div></div>
+              <div class="dd-stat"><div class="dd-stat-val">Dec</div><div class="dd-stat-lbl">Peak Month</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card fade-in">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-title">SDG Goal Alignment</div>
+            <div class="chart-sub">Performance score per relevant SDG</div>
+          </div>
+        </div>
+        <canvas id="pieChart" class="tall"></canvas>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">
+            SDG Score Breakdown <span class="arrow">▼</span>
+          </button>
+          <div class="dd-body">
+            <ul>
+              <li><strong>SDG 4 (61/100):</strong> Quality of education is moderate — curriculum gaps persist in rural schools.</li>
+              <li><strong>SDG 5 (47/100):</strong> Gender parity below threshold in 4 of 10 schools.</li>
+              <li><strong>SDG 1 (38/100):</strong> Affordability remains the biggest barrier to access.</li>
+              <li><strong>SDG 10 (42/100):</strong> Urban-rural inequality in learning outcomes is significant.</li>
+              <li><strong>SDG 17 (55/100):</strong> Some NGO partnerships active but under-leveraged.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid c2">
+      <div class="chart-card fade-in">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-title">Fees vs. Pass Rate (Scatter)</div>
+            <div class="chart-sub">Annual fees (GHS) plotted against BECE pass rate per school</div>
+          </div>
+        </div>
+        <canvas id="scatterChart"></canvas>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">
+            Correlation Insight <span class="arrow">▼</span>
+          </button>
+          <div class="dd-body">
+            <p>A moderate positive correlation exists between annual fees and pass rates (r ≈ 0.74). Schools charging above ₵380/year consistently achieve pass rates above 63%, suggesting that resource availability — funded by fees — significantly influences outcomes.</p>
+            <p>However, this also exposes an equity gap: schools serving the poorest communities charge less but lack the resources needed to achieve comparable results without external support.</p>
+            <div class="dd-stat-row">
+              <div class="dd-stat"><div class="dd-stat-val">r=0.74</div><div class="dd-stat-lbl">Correlation</div></div>
+              <div class="dd-stat"><div class="dd-stat-val">₵310</div><div class="dd-stat-lbl">Median Fee</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card fade-in">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-title">Infrastructure Score by Region</div>
+            <div class="chart-sub">Facility quality index (0–100) — colour coded by threshold</div>
+          </div>
+        </div>
+        <canvas id="barChart"></canvas>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">
+            Infrastructure Gaps <span class="arrow">▼</span>
+          </button>
+          <div class="dd-body">
+            <p>5 of 10 schools score below 45/100 — classified as <strong>"Critical"</strong>. Upper East (30) and Upper West (32) rank lowest, lacking functional toilets, libraries, and adequate classroom space per pupil.</p>
+            <p>Infrastructure score below 40 correlates strongly with pass rates under 55%, reinforcing the need for capital grants to underserved regions.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card fade-in">
+      <div class="chart-head">
+        <div class="chart-head-left">
+          <div class="chart-title">School-Level Summary</div>
+          <div class="chart-sub">All 10 schools with full SDG-relevant indicators</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>School</th><th>Region</th><th>Enrollment</th><th>Pass Rate</th>
+              <th>Girls %</th><th>Infra Score</th><th>Fees/yr (GHS)</th><th>SDG Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="font-weight:700">Hope Academy</td><td style="color:var(--muted)">Greater Accra</td><td>312</td><td><span class="tbadge tb-a">68%</span></td><td>48%</td><td><div class="bar-t"><div class="bar-f" style="width:62%;background:#91cb3e"></div></div><span style="margin-left:5px;color:var(--muted)">62</span></td><td>₵420</td><td><span class="tbadge tb-a">Progressing</span></td></tr>
+            <tr><td style="font-weight:700">Sunrise Basic</td><td style="color:var(--muted)">Ashanti</td><td>278</td><td><span class="tbadge tb-g">71%</span></td><td>52%</td><td><div class="bar-t"><div class="bar-f" style="width:55%;background:#eee82c"></div></div><span style="margin-left:5px;color:var(--muted)">55</span></td><td>₵380</td><td><span class="tbadge tb-g">On Track</span></td></tr>
+            <tr><td style="font-weight:700">New Horizon</td><td style="color:var(--muted)">Northern</td><td>195</td><td><span class="tbadge tb-a">54%</span></td><td>43%</td><td><div class="bar-t"><div class="bar-f" style="width:38%;background:var(--red)"></div></div><span style="margin-left:5px;color:var(--muted)">38</span></td><td>₵290</td><td><span class="tbadge tb-a">Progressing</span></td></tr>
+            <tr><td style="font-weight:700">Bright Future</td><td style="color:var(--muted)">Volta</td><td>241</td><td><span class="tbadge tb-a">63%</span></td><td>49%</td><td><div class="bar-t"><div class="bar-f" style="width:47%;background:#eee82c"></div></div><span style="margin-left:5px;color:var(--muted)">47</span></td><td>₵350</td><td><span class="tbadge tb-a">Progressing</span></td></tr>
+            <tr><td style="font-weight:700">Destiny School</td><td style="color:var(--muted)">Central</td><td>330</td><td><span class="tbadge tb-g">74%</span></td><td>51%</td><td><div class="bar-t"><div class="bar-f" style="width:70%;background:#91cb3e"></div></div><span style="margin-left:5px;color:var(--muted)">70</span></td><td>₵460</td><td><span class="tbadge tb-g">On Track</span></td></tr>
+            <tr><td style="font-weight:700">Wisdom Gate</td><td style="color:var(--muted)">Eastern</td><td>210</td><td><span class="tbadge tb-a">61%</span></td><td>46%</td><td><div class="bar-t"><div class="bar-f" style="width:44%;background:#eee82c"></div></div><span style="margin-left:5px;color:var(--muted)">44</span></td><td>₵320</td><td><span class="tbadge tb-a">Progressing</span></td></tr>
+            <tr><td style="font-weight:700">Eden Springs</td><td style="color:var(--muted)">Brong-Ahafo</td><td>180</td><td><span class="tbadge tb-a">57%</span></td><td>44%</td><td><div class="bar-t"><div class="bar-f" style="width:35%;background:var(--red)"></div></div><span style="margin-left:5px;color:var(--muted)">35</span></td><td>₵270</td><td><span class="tbadge tb-a">Progressing</span></td></tr>
+            <tr><td style="font-weight:700">Covenant Preparatory</td><td style="color:var(--muted)">Upper East</td><td>158</td><td><span class="tbadge tb-r">49%</span></td><td>41%</td><td><div class="bar-t"><div class="bar-f" style="width:30%;background:var(--red)"></div></div><span style="margin-left:5px;color:var(--muted)">30</span></td><td>₵230</td><td><span class="tbadge tb-r">At Risk</span></td></tr>
+            <tr><td style="font-weight:700">Pioneer Academy</td><td style="color:var(--muted)">Upper West</td><td>142</td><td><span class="tbadge tb-r">52%</span></td><td>42%</td><td><div class="bar-t"><div class="bar-f" style="width:32%;background:var(--red)"></div></div><span style="margin-left:5px;color:var(--muted)">32</span></td><td>₵240</td><td><span class="tbadge tb-r">At Risk</span></td></tr>
+            <tr><td style="font-weight:700">Star Crest</td><td style="color:var(--muted)">Western</td><td>260</td><td><span class="tbadge tb-a">66%</span></td><td>50%</td><td><div class="bar-t"><div class="bar-f" style="width:58%;background:#eee82c"></div></div><span style="margin-left:5px;color:var(--muted)">58</span></td><td>₵390</td><td><span class="tbadge tb-a">Progressing</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /home -->
+
+  <!-- ══════ KPIs ══════ -->
+  <div class="page" id="page-kpis">
+    <div class="sec-eyebrow">Key Performance Indicators</div>
+    <div class="sec-title">SDG-Aligned Metrics</div>
+    <div class="sec-desc">Detailed education-quality indicators benchmarked against SDG 4, 5 and 1 targets for Ghana.</div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card c-green fade-in">
+        <div class="kpi-label">SDG 4 Score</div>
+        <div class="kpi-val c-green" data-count="61" data-suffix="/100">0</div>
+        <div class="kpi-sub">Quality education index</div>
+      </div>
+      <div class="kpi-card c-rose fade-in">
+        <div class="kpi-label">SDG 5 Score</div>
+        <div class="kpi-val c-rose" data-count="47" data-suffix="/100">0</div>
+        <div class="kpi-sub">Gender parity index</div>
+      </div>
+      <div class="kpi-card c-blue fade-in">
+        <div class="kpi-label">SDG 1 Score</div>
+        <div class="kpi-val c-blue" data-count="38" data-suffix="/100">0</div>
+        <div class="kpi-sub">Affordability &amp; access</div>
+      </div>
+      <div class="kpi-card c-amber fade-in">
+        <div class="kpi-label">Pupil:Teacher Ratio</div>
+        <div class="kpi-val c-amber" data-count="22" data-suffix=":1">0</div>
+        <div class="kpi-sub">GES target: 35:1</div>
+      </div>
+    </div>
+
+    <div class="chart-card fade-in" style="margin-bottom:18px">
+      <div class="chart-title" style="margin-bottom:4px">Animated SDG Progress Rings</div>
+      <div class="chart-sub" style="margin-bottom:16px">Visual representation of current vs. target performance per SDG dimension</div>
+      <div class="ring-wrap" id="ringWrap"></div>
+      <div class="dd-block" style="margin-top:14px">
+        <button class="dd-toggle" onclick="toggleDD(this)">
+          What do these scores mean? <span class="arrow">▼</span>
+        </button>
+        <div class="dd-body">
+          <p>Each ring shows the current aggregate score (inner fill) out of the 100-point maximum. Scores are composite indices derived from enrollment parity, learning outcomes, affordability ratios, and infrastructure benchmarks aligned with GES and UNESCO SDG-4 frameworks.</p>
+          <ul>
+            <li><strong>60–100:</strong> On Track — marginal policy attention needed</li>
+            <li><strong>40–59:</strong> Progressing — targeted intervention recommended</li>
+            <li><strong>Below 40:</strong> At Risk — urgent structural support required</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid c2">
+      <div class="chart-card fade-in">
+        <div class="chart-title" style="margin-bottom:4px">Pass Rate per School</div>
+        <div class="chart-sub" style="margin-bottom:14px">Horizontal bar — BECE &amp; internal exam results</div>
+        <canvas id="kpiBarH"></canvas>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">Performance Bands <span class="arrow">▼</span></button>
+          <div class="dd-body">
+            <p><strong>Green (70%+):</strong> Destiny School and Sunrise Basic meet GES benchmark — driven by experienced teaching staff and relatively better infrastructure.</p>
+            <p><strong>Amber (55–69%):</strong> Six schools are progressing but require targeted literacy and numeracy interventions.</p>
+            <p><strong>Red (&lt;55%):</strong> Covenant Preparatory and Pioneer Academy are at risk — linked to teacher shortages and below-30 infrastructure scores.</p>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card fade-in">
+        <div class="chart-title" style="margin-bottom:4px">SDG Radar Overview</div>
+        <div class="chart-sub" style="margin-bottom:14px">Actual vs. SDG target — multi-dimensional radar</div>
+        <canvas id="radarChart" class="r"></canvas>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">Gap Analysis <span class="arrow">▼</span></button>
+          <div class="dd-body">
+            <p>The largest performance gaps are in <strong>Affordability</strong> (–32 pts) and <strong>Gender Parity</strong> (–23 pts) versus SDG targets. Enrollment and Teacher Ratio are closest to target, suggesting efficiency in teacher deployment despite resource scarcity.</p>
+            <div class="dd-stat-row">
+              <div class="dd-stat"><div class="dd-stat-val">–32</div><div class="dd-stat-lbl">Affordability Gap</div></div>
+              <div class="dd-stat"><div class="dd-stat-val">–23</div><div class="dd-stat-lbl">Gender Gap</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid c2">
+      <div class="chart-card fade-in">
+        <div class="chart-title" style="margin-bottom:4px">Girls vs Boys Enrollment</div>
+        <div class="chart-sub" style="margin-bottom:14px">SDG 5 — gender parity per school</div>
+        <canvas id="genderBar"></canvas>
+      </div>
+      <div class="chart-card fade-in">
+        <div class="chart-title" style="margin-bottom:4px">Fees Distribution</div>
+        <div class="chart-sub" style="margin-bottom:14px">Schools grouped by annual fee affordability band</div>
+        <canvas id="feesDoughnut"></canvas>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">Affordability Context <span class="arrow">▼</span></button>
+          <div class="dd-body">
+            <p>3 schools charge under ₵300/year — serving Ghana's lowest-income communities. At ₵270–₵290, these fees represent 7–8% of the poorest quintile's annual income, still a significant burden.</p>
+            <p>The 4 schools in the ₵400–₵500 band achieve better outcomes but may be pricing out the most vulnerable families, contradicting SDG 1 (No Poverty) objectives.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /kpis -->
+
+  <!-- ══════ STAKEHOLDERS ══════ -->
+  <div class="page" id="page-stakeholders">
+    <div class="sec-eyebrow">School Profiles</div>
+    <div class="sec-title">Individual School Data</div>
+    <div class="sec-desc">Detailed breakdown for each of the 10 low-cost private schools — enrollment, performance, gender parity, infrastructure, and fees.</div>
+
+    <div class="school-grid">
+
+      <!-- Hope Academy -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">Hope Academy</div><div class="school-card-region">Greater Accra Region</div></div>
+          <span class="tbadge tb-a">Progressing</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">312</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#eee82c">68%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">14</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:48%;background:#eee82c"></div></div><span class="school-bar-val">48%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:62%;background:#91cb3e"></div></div><span class="school-bar-val">62/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:68%;background:#eee82c"></div></div><span class="school-bar-val">68%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 22.3:1</span><span class="school-fees">₵420/yr</span></div>
+      </div>
+
+      <!-- Sunrise Basic -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">Sunrise Basic</div><div class="school-card-region">Ashanti Region</div></div>
+          <span class="tbadge tb-g">On Track</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">278</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">71%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">11</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:52%;background:#91cb3e"></div></div><span class="school-bar-val">52%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:55%;background:#eee82c"></div></div><span class="school-bar-val">55/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:71%;background:#91cb3e"></div></div><span class="school-bar-val">71%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 25.3:1</span><span class="school-fees">₵380/yr</span></div>
+      </div>
+
+      <!-- New Horizon -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">New Horizon</div><div class="school-card-region">Northern Region</div></div>
+          <span class="tbadge tb-a">Progressing</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">195</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#eee82c">54%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">8</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:43%;background:#c27070"></div></div><span class="school-bar-val">43%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:38%;background:#c27070"></div></div><span class="school-bar-val">38/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:54%;background:#eee82c"></div></div><span class="school-bar-val">54%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 24.4:1</span><span class="school-fees">₵290/yr</span></div>
+      </div>
+
+      <!-- Bright Future -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">Bright Future</div><div class="school-card-region">Volta Region</div></div>
+          <span class="tbadge tb-a">Progressing</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">241</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#eee82c">63%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">10</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:49%;background:#eee82c"></div></div><span class="school-bar-val">49%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:47%;background:#eee82c"></div></div><span class="school-bar-val">47/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:63%;background:#eee82c"></div></div><span class="school-bar-val">63%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 24.1:1</span><span class="school-fees">₵350/yr</span></div>
+      </div>
+
+      <!-- Destiny School -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">Destiny School</div><div class="school-card-region">Central Region</div></div>
+          <span class="tbadge tb-g">On Track</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">330</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">74%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">16</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:51%;background:#91cb3e"></div></div><span class="school-bar-val">51%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:70%;background:#91cb3e"></div></div><span class="school-bar-val">70/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:74%;background:#91cb3e"></div></div><span class="school-bar-val">74%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 20.6:1</span><span class="school-fees">₵460/yr</span></div>
+      </div>
+
+      <!-- Wisdom Gate -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">Wisdom Gate</div><div class="school-card-region">Eastern Region</div></div>
+          <span class="tbadge tb-a">Progressing</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">210</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#eee82c">61%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">9</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:46%;background:#eee82c"></div></div><span class="school-bar-val">46%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:44%;background:#eee82c"></div></div><span class="school-bar-val">44/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:61%;background:#eee82c"></div></div><span class="school-bar-val">61%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 23.3:1</span><span class="school-fees">₵320/yr</span></div>
+      </div>
+
+      <!-- Eden Springs -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">Eden Springs</div><div class="school-card-region">Brong-Ahafo Region</div></div>
+          <span class="tbadge tb-a">Progressing</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">180</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#eee82c">57%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">7</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:44%;background:#c27070"></div></div><span class="school-bar-val">44%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:35%;background:#c27070"></div></div><span class="school-bar-val">35/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:57%;background:#eee82c"></div></div><span class="school-bar-val">57%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 25.7:1</span><span class="school-fees">₵270/yr</span></div>
+      </div>
+
+      <!-- Covenant Preparatory -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">Covenant Preparatory</div><div class="school-card-region">Upper East Region</div></div>
+          <span class="tbadge tb-r">At Risk</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">158</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#c27070">49%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">6</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:41%;background:#c27070"></div></div><span class="school-bar-val">41%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:30%;background:#c27070"></div></div><span class="school-bar-val">30/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:49%;background:#c27070"></div></div><span class="school-bar-val">49%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 26.3:1</span><span class="school-fees">₵230/yr</span></div>
+      </div>
+
+      <!-- Pioneer Academy -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">Pioneer Academy</div><div class="school-card-region">Upper West Region</div></div>
+          <span class="tbadge tb-r">At Risk</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">142</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#c27070">52%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">6</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:42%;background:#c27070"></div></div><span class="school-bar-val">42%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:32%;background:#c27070"></div></div><span class="school-bar-val">32/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:52%;background:#c27070"></div></div><span class="school-bar-val">52%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 23.7:1</span><span class="school-fees">₵240/yr</span></div>
+      </div>
+
+      <!-- Star Crest -->
+      <div class="chart-card fade-in school-card">
+        <div class="school-card-header">
+          <div><div class="school-card-name">Star Crest</div><div class="school-card-region">Western Region</div></div>
+          <span class="tbadge tb-a">Progressing</span>
+        </div>
+        <div class="school-metrics-row">
+          <div class="school-metric"><div class="school-metric-val" style="color:#91cb3e">260</div><div class="school-metric-lbl">Enrolled</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#eee82c">66%</div><div class="school-metric-lbl">Pass Rate</div></div>
+          <div class="school-metric"><div class="school-metric-val" style="color:#8a9bb0">12</div><div class="school-metric-lbl">Teachers</div></div>
+        </div>
+        <div class="school-bars">
+          <div class="school-bar-row"><span class="school-bar-label">Girls Enroll.</span><div class="school-bar-track"><div class="school-bar-fill" style="width:50%;background:#91cb3e"></div></div><span class="school-bar-val">50%</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Infrastructure</span><div class="school-bar-track"><div class="school-bar-fill" style="width:58%;background:#eee82c"></div></div><span class="school-bar-val">58/100</span></div>
+          <div class="school-bar-row"><span class="school-bar-label">Pass Rate</span><div class="school-bar-track"><div class="school-bar-fill" style="width:66%;background:#eee82c"></div></div><span class="school-bar-val">66%</span></div>
+        </div>
+        <div class="school-footer"><span class="school-teachers">Pupil:Teacher — 21.7:1</span><span class="school-fees">₵390/yr</span></div>
+      </div>
+
+    </div>
+  </div><!-- /stakeholders -->
+
+  <!-- ══════ INSIGHTS ══════ -->
+  <div class="page" id="page-insights">
+    <div class="sec-eyebrow">Analysis &amp; Recommendations</div>
+    <div class="sec-title">Evidence-Based Policy Insights</div>
+    <div class="sec-desc">Key findings from school-level data, mapped to Ghana Education Service SDG action priorities.</div>
+
+    <div class="ins-grid">
+      <div class="ins-card fade-in">
+        <div class="ins-eyebrow" style="color:#91cb3e">SDG 4 · Quality Education</div>
+        <div class="ins-num" style="color:#91cb3e" data-count="61" data-suffix="%">0%</div>
+        <div class="ins-title">Average Pass Rate Needs Targeted Intervention</div>
+        <div class="ins-body">Only 2 of 10 schools exceed the 70% GES benchmark. Northern and Upper East regions lag with rates below 55%. Curriculum support, teacher CPD and learning materials remain critical gaps requiring urgent policy action.</div>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">Recommended Actions <span class="arrow">▼</span></button>
+          <div class="dd-body">
+            <ul>
+              <li>Deploy GES master teachers as cluster mentors in low-performing schools</li>
+              <li>Provide textbook packs aligned with BECE syllabus to all pupils</li>
+              <li>Introduce termly diagnostic assessments with remediation protocols</li>
+              <li>Incentivise qualified teachers with northern-region hardship allowances</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="ins-card fade-in">
+        <div class="ins-eyebrow" style="color:var(--accent2)">SDG 5 · Gender Equality</div>
+        <div class="ins-num" style="color:var(--accent2)" data-count="47" data-suffix="%">0%</div>
+        <div class="ins-title">Girls Enrollment Below Parity in 4 Schools</div>
+        <div class="ins-body">Upper West, Upper East, Northern and Volta regions report girls' enrollment below 45%, indicating persistent socio-cultural barriers. Conditional cash transfers and safe-school initiatives could help close the gap rapidly.</div>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">Gender Parity Actions <span class="arrow">▼</span></button>
+          <div class="dd-body">
+            <ul>
+              <li>Implement school-based girls' clubs and female role-model visits</li>
+              <li>Provide menstrual hygiene kits and private WASH facilities</li>
+              <li>Partner with district assemblies on conditional fee-waiver programmes</li>
+              <li>Engage community elders to reduce socio-cultural school-exit barriers</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="ins-card fade-in">
+        <div class="ins-eyebrow" style="color:#eee82c">SDG 1 · No Poverty</div>
+        <div class="ins-num" style="color:#eee82c">₵310</div>
+        <div class="ins-title">Median Annual Fees Exclude Poorest Households</div>
+        <div class="ins-body">With Ghana's poorest quintile earning under ₵3,600/year, school fees of ₵310–₵460 represent 9–13% of household income. Scholarship schemes and flexible payment options are urgently needed to prevent dropout.</div>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">Affordability Interventions <span class="arrow">▼</span></button>
+          <div class="dd-body">
+            <ul>
+              <li>Introduce income-assessed sliding-scale fees across all 10 schools</li>
+              <li>Apply for LEAP (Livelihood Empowerment Against Poverty) programme linkages</li>
+              <li>Establish alumni donor fund for scholarship endowments</li>
+              <li>Partner with mobile money platforms for instalment payment options</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="ins-card fade-in">
+        <div class="ins-eyebrow" style="color:var(--red)">SDG 4.a · Learning Environments</div>
+        <div class="ins-num" style="color:var(--red)" data-count="47" data-suffix="/100">0</div>
+        <div class="ins-title">Infrastructure Critically Low in 5 Schools</div>
+        <div class="ins-body">Average infrastructure score is 47/100, with 5 schools below 45. Inadequate sanitation, absent libraries, and overcrowded classrooms directly reduce learning outcomes — especially for girls.</div>
+        <div class="dd-block" style="margin-top:14px">
+          <button class="dd-toggle" onclick="toggleDD(this)">Infrastructure Roadmap <span class="arrow">▼</span></button>
+          <div class="dd-body">
+            <ul>
+              <li>Prioritise WASH construction at Upper East and Upper West schools</li>
+              <li>Apply for GETFund grants for classroom block rehabilitation</li>
+              <li>Partner with local NGOs for library and reading corner installations</li>
+              <li>Develop annual infrastructure audit protocol for GES monitoring</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="ins-card full fade-in">
+        <div class="ins-eyebrow" style="color:var(--soft)">Policy Recommendations Matrix</div>
+        <div class="ins-title">Three-Phase Action Plan for Ghana Education Service</div>
+        <div class="rec-grid">
+          <div>
+            <div class="rec-col-title" style="color:#91cb3e">Immediate (0–6 months)</div>
+            <div class="rec-col-body">
+              Deploy teacher support clusters in Northern and Upper East regions.<br>
+              Introduce school feeding supplements in below-55% pass-rate schools.<br>
+              Conduct WASH audits at all 10 schools and remediate critical failures.<br>
+              Launch girls' enrolment drive in 4 below-parity regions.
+            </div>
+          </div>
+          <div>
+            <div class="rec-col-title" style="color:#eee82c">Medium-term (6–18 months)</div>
+            <div class="rec-col-body">
+              Roll out conditional cash transfers for girls in parity-gap regions.<br>
+              Partner with NGOs for library and ICT lab infrastructure grants.<br>
+              Introduce tiered fee waivers linked to household income assessment.<br>
+              Establish termly learning outcome monitoring dashboards.
+            </div>
+          </div>
+          <div>
+            <div class="rec-col-title" style="color:var(--accent3)">Strategic (18 months+)</div>
+            <div class="rec-col-body">
+              Integrate this dataset into Ghana's national EMIS for SDG 4 tracking.<br>
+              Build public-private partnerships to co-fund teacher salaries.<br>
+              Develop regional SDG scorecards for accountability reporting.<br>
+              Scale successful pilots to all 10 regions with GES endorsement.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /insights -->
+
+</div><!-- /main -->
+
+<script>
+// ── STATIC DATA (converted from PHP) ──
+const schools = [
+  {name:"Hope Academy",        region:"Greater Accra", enrollment:312, teachers:14, pass_rate:68, girls_pct:48, fees_ghs:420, infrastructure:62},
+  {name:"Sunrise Basic",       region:"Ashanti",       enrollment:278, teachers:11, pass_rate:71, girls_pct:52, fees_ghs:380, infrastructure:55},
+  {name:"New Horizon",         region:"Northern",      enrollment:195, teachers:8,  pass_rate:54, girls_pct:43, fees_ghs:290, infrastructure:38},
+  {name:"Bright Future",       region:"Volta",         enrollment:241, teachers:10, pass_rate:63, girls_pct:49, fees_ghs:350, infrastructure:47},
+  {name:"Destiny School",      region:"Central",       enrollment:330, teachers:16, pass_rate:74, girls_pct:51, fees_ghs:460, infrastructure:70},
+  {name:"Wisdom Gate",         region:"Eastern",       enrollment:210, teachers:9,  pass_rate:61, girls_pct:46, fees_ghs:320, infrastructure:44},
+  {name:"Eden Springs",        region:"Brong-Ahafo",   enrollment:180, teachers:7,  pass_rate:57, girls_pct:44, fees_ghs:270, infrastructure:35},
+  {name:"Covenant Preparatory",region:"Upper East",    enrollment:158, teachers:6,  pass_rate:49, girls_pct:41, fees_ghs:230, infrastructure:30},
+  {name:"Pioneer Academy",     region:"Upper West",    enrollment:142, teachers:6,  pass_rate:52, girls_pct:42, fees_ghs:240, infrastructure:32},
+  {name:"Star Crest",          region:"Western",       enrollment:260, teachers:12, pass_rate:66, girls_pct:50, fees_ghs:390, infrastructure:58},
+];
+const scatterData = schools.map(s=>({x:s.fees_ghs, y:s.pass_rate, name:s.name, region:s.region}));
+const monthlyEnr  = [2100,2180,2230,2290,2310,2280,2150,2200,2306,2350,2390,2450];
+const months      = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const sdgLabels   = ["SDG 4: Quality Ed.","SDG 5: Gender Eq.","SDG 1: No Poverty","SDG 10: Reduced Ineq.","SDG 17: Partnerships"];
+const sdgScores   = [61,47,38,42,55];
+const sdgColors   = ["#91cb3e","#eee82c","#53687e","#8a9bb0","#c2b2b4"];
+
+// ── CHART DEFAULTS ──
+Chart.defaults.color       = '#c2b2b4';
+Chart.defaults.borderColor = '#4a5568';
+Chart.defaults.font.family = 'Arial, Helvetica, sans-serif';
+Chart.defaults.font.size   = 12;
+
+const chartStore = {};
+function kill(id){ if(chartStore[id]){ chartStore[id].destroy(); delete chartStore[id]; } }
+
+// ── NAVIGATION ──
+function showPage(id, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  document.querySelectorAll('#page-'+id+' .fade-in').forEach(e=>{ e.classList.remove('visible'); });
+  setTimeout(()=>{ initCharts(id); triggerFadeIns(); animateCounters(); }, 60);
+}
+
+// ── DROPDOWN TOGGLE ──
+function toggleDD(btn){
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+// ── FADE-IN OBSERVER ──
+function triggerFadeIns(){
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  },{threshold:0.12});
+  document.querySelectorAll('.fade-in:not(.visible)').forEach(el=>obs.observe(el));
+}
+
+// ── COUNTER ANIMATION ──
+function animateCounters(){
+  document.querySelectorAll('.page.active [data-count]').forEach(el=>{
+    const target = parseFloat(el.dataset.count);
+    const suffix = el.dataset.suffix || '';
+    const isFloat = target % 1 !== 0;
+    let start = null;
+    const duration = 1200;
+    function step(ts){
+      if(!start) start = ts;
+      const progress = Math.min((ts-start)/duration,1);
+      const ease = 1-Math.pow(1-progress,3);
+      const cur = isFloat?(target*ease).toFixed(1):Math.round(target*ease);
+      el.textContent = (el.dataset.prefix||'')+cur+suffix;
+      if(progress<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+// ── PROGRESS RINGS ──
+function buildRings(){
+  const ringData = [
+    {label:'SDG 4\nQuality Ed.',  score:61, color:'#91cb3e'},
+    {label:'SDG 5\nGender Eq.',   score:47, color:'#c2b2b4'},
+    {label:'SDG 1\nNo Poverty',   score:38, color:'#eee82c'},
+    {label:'SDG 10\nInequality',  score:42, color:'#8a9bb0'},
+    {label:'SDG 17\nPartnerships',score:55, color:'#53687e'},
+    {label:'Pass Rate\nAverage',  score:62, color:'#a78ca8'},
+  ];
+  const wrap = document.getElementById('ringWrap');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  ringData.forEach(d=>{
+    const r=36,cx=44,cy=44,circumference=2*Math.PI*r;
+    const offset=circumference*(1-d.score/100);
+    const div=document.createElement('div');
+    div.className='ring-item';
+    div.innerHTML=`
+      <svg width="88" height="88" viewBox="0 0 88 88" class="ring">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#3a4454" stroke-width="8"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}" stroke-width="8"
+          stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}"
+          stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"
+          style="transition:stroke-dashoffset 1.3s cubic-bezier(.4,0,.2,1)"
+          data-offset="${offset}"/>
+        <text x="${cx}" y="${cy}" text-anchor="middle" dy=".35em"
+          fill="${d.color}" font-size="14" font-weight="700" font-family="Arial,sans-serif">${d.score}</text>
+      </svg>
+      <div class="ring-label">${d.label.replace('\n','<br>')}</div>`;
+    wrap.appendChild(div);
+  });
+  setTimeout(()=>{
+    wrap.querySelectorAll('circle[data-offset]').forEach(c=>{
+      c.style.strokeDashoffset=c.dataset.offset;
+    });
+  },150);
+}
+
+// ── CHART INIT ROUTER ──
+function initCharts(page){
+  if(page==='home')    initHome();
+  if(page==='kpis')    initKpis();
+}
+
+// ── HOME CHARTS ──
+function initHome(){
+  kill('lineChart');
+  chartStore['lineChart']=new Chart(document.getElementById('lineChart'),{
+    type:'line',
+    data:{labels:months,datasets:[{
+      label:'Total Enrollment',data:monthlyEnr,
+      borderColor:'#91cb3e',backgroundColor:'rgba(145,203,62,.1)',
+      borderWidth:2.5,pointBackgroundColor:'#eee82c',pointRadius:4,tension:.4,fill:true
+    }]},
+    options:{responsive:true,animation:{duration:1100,easing:'easeOutCubic'},
+      plugins:{legend:{display:false}},
+      scales:{y:{grid:{color:'#3a4454'},ticks:{color:'#c2b2b4'},min:2000},x:{grid:{display:false},ticks:{color:'#c2b2b4'}}}}
+  });
+
+  kill('pieChart');
+  chartStore['pieChart']=new Chart(document.getElementById('pieChart'),{
+    type:'pie',
+    data:{labels:sdgLabels,datasets:[{data:sdgScores,backgroundColor:sdgColors,borderColor:'#323d4e',borderWidth:3,hoverOffset:8}]},
+    options:{responsive:true,animation:{duration:1000,easing:'easeOutBack'},
+      plugins:{legend:{position:'bottom',labels:{padding:14,font:{size:11},color:'#c2b2b4'}},
+               tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw}/100`}}}}
+  });
+
+  kill('scatterChart');
+  chartStore['scatterChart']=new Chart(document.getElementById('scatterChart'),{
+    type:'scatter',
+    data:{datasets:[{label:'Schools',data:scatterData.map(s=>({x:s.x,y:s.y,name:s.name})),
+      backgroundColor:scatterData.map((_,i)=>`hsl(${80+i*18},60%,55%)`),
+      pointRadius:9,pointHoverRadius:12,borderColor:'#232b38',borderWidth:2}]},
+    options:{responsive:true,animation:{duration:900},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+        const d=scatterData[ctx.dataIndex];return[`${d.name}`,`Fees: ₵${d.x}`,`Pass Rate: ${d.y}%`];
+      }}}},
+      scales:{
+        x:{grid:{color:'#3a4454'},title:{display:true,text:'Annual Fees (GHS)',color:'#8a9bb0'},ticks:{color:'#c2b2b4'},min:200,max:500},
+        y:{grid:{color:'#3a4454'},title:{display:true,text:'Pass Rate (%)',color:'#8a9bb0'},ticks:{color:'#c2b2b4'},min:40,max:80}}}
+  });
+
+  kill('barChart');
+  chartStore['barChart']=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels:schools.map(s=>s.region.split(' ')[0]),datasets:[{
+      label:'Infrastructure Score',data:schools.map(s=>s.infrastructure),
+      backgroundColor:schools.map(s=>s.infrastructure>=60?'rgba(145,203,62,.75)':s.infrastructure>=45?'rgba(238,232,44,.75)':'rgba(194,112,112,.75)'),
+      borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,animation:{duration:1000,easing:'easeOutBounce'},
+      plugins:{legend:{display:false}},
+      scales:{y:{grid:{color:'#3a4454'},ticks:{color:'#c2b2b4'},max:100},x:{grid:{display:false},ticks:{color:'#c2b2b4',font:{size:10}}}}}
+  });
+}
+
+// ── KPI CHARTS ──
+function initKpis(){
+  buildRings();
+
+  kill('kpiBarH');
+  chartStore['kpiBarH']=new Chart(document.getElementById('kpiBarH'),{
+    type:'bar',
+    data:{labels:schools.map(s=>s.name),datasets:[{
+      label:'Pass Rate (%)',data:schools.map(s=>s.pass_rate),
+      backgroundColor:schools.map(s=>s.pass_rate>=70?'rgba(145,203,62,.78)':s.pass_rate>=55?'rgba(238,232,44,.78)':'rgba(194,112,112,.78)'),
+      borderRadius:5,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,animation:{duration:1100,easing:'easeOutCubic'},
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'#3a4454'},ticks:{color:'#c2b2b4'},max:100},y:{grid:{display:false},ticks:{color:'#eef0f4',font:{size:11}}}}}
+  });
+
+  kill('radarChart');
+  chartStore['radarChart']=new Chart(document.getElementById('radarChart'),{
+    type:'radar',
+    data:{labels:['Pass Rate','Gender Parity','Affordability','Infrastructure','Enrollment','Teacher Ratio'],
+      datasets:[
+        {label:'Current Average',data:[61,47,38,47,64,72],backgroundColor:'rgba(145,203,62,.15)',borderColor:'#91cb3e',pointBackgroundColor:'#eee82c',borderWidth:2},
+        {label:'SDG Target',data:[80,70,70,75,80,85],backgroundColor:'rgba(238,232,44,.06)',borderColor:'rgba(238,232,44,.4)',pointBackgroundColor:'#eee82c',borderWidth:1.5,borderDash:[4,3]}
+      ]},
+    options:{responsive:true,animation:{duration:1000},
+      plugins:{legend:{position:'bottom',labels:{color:'#c2b2b4',font:{size:11},padding:14}}},
+      scales:{r:{grid:{color:'#3a4454'},angleLines:{color:'#3a4454'},ticks:{display:false},pointLabels:{color:'#8a9bb0',font:{size:11}},min:0,max:100}}}
+  });
+
+  kill('genderBar');
+  chartStore['genderBar']=new Chart(document.getElementById('genderBar'),{
+    type:'bar',
+    data:{labels:schools.map(s=>s.name.split(' ')[0]),datasets:[
+      {label:'Girls (%)',data:schools.map(s=>s.girls_pct),backgroundColor:'rgba(238,232,44,.75)',borderRadius:4},
+      {label:'Boys (%)', data:schools.map(s=>100-s.girls_pct),backgroundColor:'rgba(83,104,126,.65)',borderRadius:4}
+    ]},
+    options:{responsive:true,animation:{duration:900},
+      plugins:{legend:{position:'bottom',labels:{color:'#c2b2b4',font:{size:11}}}},
+      scales:{y:{grid:{color:'#3a4454'},ticks:{color:'#c2b2b4'},max:100},x:{grid:{display:false},ticks:{color:'#c2b2b4',font:{size:10}}}}}
+  });
+
+  kill('feesDoughnut');
+  const bands={'<₵300':0,'₵300–₵400':0,'₵400–₵500':0};
+  schools.forEach(s=>{
+    if(s.fees_ghs<300)bands['<₵300']++;
+    else if(s.fees_ghs<=400)bands['₵300–₵400']++;
+    else bands['₵400–₵500']++;
+  });
+  chartStore['feesDoughnut']=new Chart(document.getElementById('feesDoughnut'),{
+    type:'doughnut',
+    data:{labels:Object.keys(bands),datasets:[{
+      data:Object.values(bands),
+      backgroundColor:['rgba(194,112,112,.75)','rgba(238,232,44,.75)','rgba(145,203,62,.75)'],
+      borderColor:'#323d4e',borderWidth:3,hoverOffset:6}]},
+    options:{responsive:true,cutout:'62%',animation:{duration:1000,easing:'easeOutBack'},
+      plugins:{legend:{position:'bottom',labels:{color:'#c2b2b4',font:{size:12},padding:16}},
+               tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw} schools`}}}}
+  });
+}
+
+// ── INIT ON LOAD ──
+document.addEventListener('DOMContentLoaded',()=>{
+  triggerFadeIns();
+  animateCounters();
+  initHome();
+});
+</script>
+</body>
+</html>
